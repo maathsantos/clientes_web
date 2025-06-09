@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastro de Clientes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container mt-4">
+    <h2>Cadastro de Clientes</h2>
+    <form method="POST" class="row g-3 mb-4">
+        <div class="col-md-3">
+            <input type="text" name="nome" class="form-control" placeholder="Nome" required>
+        </div>
+        <div class="col-md-3">
+            <input type="email" name="email" class="form-control" placeholder="E-mail" required>
+        </div>
+        <div class="col-md-2">
+            <input type="text" name="telefone" class="form-control" placeholder="Telefone" required>
+        </div>
+        <div class="col-md-2">
+            <input type="text" name="cidade" class="form-control" placeholder="Cidade" required>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-success w-100">Cadastrar</button>
+        </div>
+    </form>
+
+    <form method="GET" class="mb-3">
+        <div class="input-group">
+            <input type="text" name="search" class="form-control" placeholder="Procurar por nome, e-mail ou cidade" value="{{ search }}">
+            <button class="btn btn-outline-secondary" type="submit">Procurar</button>
+            <a href="/export" class="btn btn-outline-primary">Exportar CSV</a>
+        </div>
+    </form>
+
+    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+        <table class="table table-bordered table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Nome</th>
+                    <th>E-mail</th>
+                    <th>Telefone</th>
+                    <th>Cidade</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cliente in clientes %}
+                <tr>
+                    <td>{{ cliente[1] }}</td>
+                    <td>{{ cliente[2] }}</td>
+                    <td>{{ cliente[3] }}</td>
+                    <td>{{ cliente[4] }}</td>
+                    <td>
+                        <a href="/edit/{{ cliente[0] }}" class="btn btn-sm btn-warning">Editar</a>
+                        <a href="/delete/{{ cliente[0] }}" class="btn btn-sm btn-danger" onclick="return confirm('Deseja excluir?')">Excluir</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>
