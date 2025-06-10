@@ -2,11 +2,11 @@ from flask import Flask, render_template, request, redirect, url_for, send_file
 import sqlite3
 import csv
 import io
+import re
 
 app = Flask(__name__)
 DB_NAME = 'clientes.db'
 
-# Função para criar a tabela se não existir
 def criar_tabela():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -22,10 +22,11 @@ def criar_tabela():
     conn.commit()
     conn.close()
 
-# Chama para garantir que a tabela exista ao iniciar o app
+def email_valido(email):
+    return re.match(r"[^@]+@[^@]+\.[^@]+", email)
+
 criar_tabela()
 
-# Página principal: lista e busca
 @app.route('/', methods=['GET', 'POST'])
 def index():
     conn = sqlite3.connect(DB_NAME)
@@ -43,7 +44,6 @@ def index():
     conn.close()
     return render_template('index.html', clientes=clientes, busca=busca)
 
-# Adicionar novo cliente
 @app.route('/add', methods=['POST'])
 def add():
     nome = request.form['nome'].strip()
@@ -51,9 +51,10 @@ def add():
     telefone = request.form['telefone'].strip()
     cidade = request.form['cidade'].strip()
 
-    # Validação simples
     if not nome or not email or not telefone or not cidade:
         return "Todos os campos são obrigatórios!", 400
+    if not email_valido(email):
+        return "Email inválido!", 400
 
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -63,7 +64,6 @@ def add():
     conn.close()
     return redirect(url_for('index'))
 
-# Página para editar cliente
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
     conn = sqlite3.connect(DB_NAME)
@@ -77,6 +77,8 @@ def edit(id):
 
         if not nome or not email or not telefone or not cidade:
             return "Todos os campos são obrigatórios!", 400
+        if not email_valido(email):
+            return "Email inválido!", 400
 
         c.execute("UPDATE clientes SET nome=?, email=?, telefone=?, cidade=? WHERE id=?",
                   (nome, email, telefone, cidade, id))
@@ -84,16 +86,14 @@ def edit(id):
         conn.close()
         return redirect(url_for('index'))
 
+    c.execute("SELECT * FROM clientes WHERE id=?", (id,))
+    cliente = c.fetchone()
+    conn.close()
+    if cliente:
+        return render_template('edit.html', cliente=cliente)
     else:
-        c.execute("SELECT * FROM clientes WHERE id=?", (id,))
-        cliente = c.fetchone()
-        conn.close()
-        if cliente:
-            return render_template('edit.html', cliente=cliente)
-        else:
-            return "Cliente não encontrado", 404
+        return "Cliente não encontrado", 404
 
-# Excluir cliente
 @app.route('/delete/<int:id>', methods=['POST'])
 def delete(id):
     conn = sqlite3.connect(DB_NAME)
@@ -103,7 +103,6 @@ def delete(id):
     conn.close()
     return redirect(url_for('index'))
 
-# Exportar clientes para CSV
 @app.route('/export')
 def export():
     conn = sqlite3.connect(DB_NAME)
